@@ -24,7 +24,10 @@ import dev.triumphteam.gui.guis.GuiItem;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.ShopGuiPlugin;
 import net.brcdev.shopgui.economy.EconomyType;
+import net.brcdev.shopgui.event.ShopPreTransactionEvent;
 import net.brcdev.shopgui.provider.economy.EconomyProvider;
+import net.brcdev.shopgui.shop.ShopManager;
+import net.brcdev.shopgui.shop.item.ShopItem;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.*;
@@ -391,7 +394,15 @@ public final class CommandSellGUI implements TabExecutor {
 
                 double itemSellPrice = itemStackSellPriceCache.containsKey(singleItem) ? itemStackSellPriceCache.get(singleItem).getSellPrice() * amount : ShopGuiPlusApi.getItemStackPriceSell(player, i);
 
-                totalPrice += itemSellPrice;
+                try {
+                    ShopPreTransactionEvent shopPreTransactionEvent = (ShopPreTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPreTransactionEvent").getDeclaredConstructor(new Class[] { ShopManager.ShopAction.class, ShopItem.class, Player.class, int.class, double.class }).newInstance(new Object[] { ShopManager.ShopAction.SELL, ShopGuiPlusApi.getItemStackShopItem(i), player, amount, itemSellPrice});
+                    Bukkit.getPluginManager().callEvent(shopPreTransactionEvent);
+                    itemSellPrice = shopPreTransactionEvent.getPrice();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                totalPrice = totalPrice + itemSellPrice;
 
                 EconomyType itemEconomyType = ShopHandler.getEconomyType(i);
 
